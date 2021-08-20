@@ -3,23 +3,17 @@
 /**
 * @fileoverview index.php, Dispatcher
 * @author Vincent Thibault (alias KeyWorld - Twitter: @robrowser)
-* @version 2.1.0
+* @editor Github: @sparkymod - Discord: Sparkmod#1935
+* @version 2.2
 */
 
-
 ob_start();
-
-
 
 // Error manager
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
-
-
 define('__ROOT__', dirname(__FILE__) . '/'); 
-
-
 
 // Loading CORE files
 require_once( __ROOT__ . 'core/class.Debug.php');
@@ -29,11 +23,8 @@ require_once( __ROOT__ . 'core/class.Client.php');
 require_once( __ROOT__ . 'core/class.DB.php');
 
 
-
 // Set on the debug
-//Debug::enable();
-
-
+Debug::enable();
 
 /// Configs ---------------------------------------------------------
 //- Cache
@@ -46,14 +37,11 @@ Client::$AutoExtract  =     true                  ;   // If true, client will sa
 //- DB
 DB::$path             =     __ROOT__ . "db/"      ;   // The db folder (where is located the lua likes files)
 //- Sql
-Controller::$hostname =     getenv("DB_HOST")     ;   // Mysql Host
-Controller::$port =         getenv("DB_PORT")     ;   // Mysql Port
-Controller::$database =     getenv("DB_DATABASE") ;   // Database Name
-Controller::$username =     getenv("DB_USERNAME") ;   // Database Username
-Controller::$password =     getenv("DB_PASSWORD") ;   // Database Pass
+Controller::$hostname =    "localhost"            ;   // Mysql Host
+Controller::$database =    "ragnarok"             ;   // Database Name
+Controller::$username =    "ragnarok"             ;   // Database Username
+Controller::$password =    "admin"                ;   // Database Pass
 /// -----------------------------------------------------------------
-
-
 
 // No write access to directory ? disable cache.
 if( Cache::$time && !is_writable(Cache::$path) ) {
@@ -65,13 +53,10 @@ if( Client::$AutoExtract && !is_writable(Client::$path . 'data/') ) {
 	Debug::write('Disable GRF auto-extract mode, don\'t have write access to "'. Client::$path  .'data/".', 'error');
 }
 
-
-
 // Don't cache images when debug mode is on
 if( Debug::isEnable() ) {
 	Cache::$time = 0;
 }
-
 
 
 // Url Rewriting
@@ -79,13 +64,14 @@ $routes = array();
 $routes['/character/(.*)/(\d+)/([0-7])'] = 'Character';
 $routes['/character/(.*)']               = 'Character';
 $routes['/characterhead/(.*)']           = 'CharacterHead';
+$routes['/item/(.*)']           	     = 'Item';
+$routes['/itemcollection/(.*)']          = 'ItemCollection';
+$routes['/itemdesc/(.*)']          	     = 'ItemDesc';
 $routes['/avatar/(.*)']                  = 'Avatar';
 $routes['/signature/(.*)']               = 'Signature';
 $routes['/monster/(\d+)']                = 'Monster';
 $routes['/generate/body=(F|M)-(\d+)-(\d+)/hair=(\d+)-(\d+)-(\d)/hats=(\d+)-(\d+)-(\d+)/equip=(\d+)-(\d+)-(\d+)/option=(\d+)/actdir=([0-7])-(\d+)-(\d+)'] = 'Generator';
 //$routes['/update/(hats|mobs|robes)'] = 'Update'; // Uncomment this line if you want to perform updates by updating lua files.
-
-
 
 try {
 	// Initialize client and process
@@ -100,3 +86,5 @@ catch(Exception $e)
 
 // Debug
 Debug::output();
+
+?>
