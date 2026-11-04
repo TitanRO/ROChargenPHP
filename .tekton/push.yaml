@@ -21,7 +21,7 @@ spec:
     - {name: git-revision, value: "{{ revision }}"}
     - {name: context, value: .}
     - {name: dockerfile, value: Dockerfile}
-    - {name: image, value: registry.digitalocean.com/titanro-docr/rochargen}
+    - {name: image, value: registry.digitalocean.com/titanro-nyc/rochargen}
     - {name: image-name, value: rochargen}
     - {name: sysops-path, value: "argo/rochargen"}
   taskRunTemplate:
