@@ -9,6 +9,8 @@ metadata:
     pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/on-target-branch: "[master]"
     pipelinesascode.tekton.dev/max-keep-runs: "5"
+    # A newer push to the same branch cancels this run, so only the latest commit is built and pinned.
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
 spec:
   pipelineRef:
     resolver: cluster
