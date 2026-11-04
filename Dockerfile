@@ -1,4 +1,6 @@
-# docker build -t registry.digitalocean.com/titanro-docr/rochargen . && docker image push registry.digitalocean.com/titanro-docr/rochargen
+# doctl registry login --expiry-seconds 3600 && docker build -t registry.digitalocean.com/titanro-docr/rochargen . && docker image push registry.digitalocean.com/titanro-docr/rochargen
+# Normally built by Tekton Pipelines-as-Code (.tekton/push.yaml) on pushes to master; titanro-ci[bot] pins the digest in
+# TitanRO/sysops argo/rochargen, and Argo CD deploys it. The line above is the manual fallback.
 
 FROM php:8-apache
 

@@ -1,0 +1,49 @@
+# Pipelines-as-Code: on a push to master, build ./Dockerfile, push it to DOCR tagged with the commit SHA and pin the
+# digest in TitanRO/sysops argo/rochargen (commit by titanro-ci[bot]); Argo CD then deploys it automatically.
+# Runs in namespace ci (Repository for this repo in sysops k8s/tekton-pipelines/pac-repositories.yaml).
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: rochargen-
+  annotations:
+    pipelinesascode.tekton.dev/on-event: "[push]"
+    pipelinesascode.tekton.dev/on-target-branch: "[master]"
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+spec:
+  pipelineRef:
+    resolver: cluster
+    params:
+      - {name: kind, value: pipeline}
+      - {name: name, value: build-and-pin}
+      - {name: namespace, value: tekton-pipelines}
+  params:
+    - {name: git-url, value: "{{ repo_url }}"}
+    - {name: git-revision, value: "{{ revision }}"}
+    - {name: context, value: .}
+    - {name: dockerfile, value: Dockerfile}
+    - {name: image, value: registry.digitalocean.com/titanro-docr/rochargen}
+    - {name: image-name, value: rochargen}
+    - {name: sysops-path, value: "argo/rochargen"}
+  taskRunTemplate:
+    serviceAccountName: ci-builder
+    podTemplate:
+      securityContext:
+        fsGroup: 65532
+  timeouts:
+    pipeline: 60m
+  workspaces:
+    - name: work
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 1Gi
+    - name: docr-push
+      secret:
+        secretName: ci-docr-push
+        items:
+          - {key: docker_auth_config, path: config.json}
+    - name: github-app
+      secret:
+        secretName: ci-github-app
