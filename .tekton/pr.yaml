@@ -1,0 +1,43 @@
+# Pipelines-as-Code: on a pull request to master, build Dockerfile WITHOUT pushing it and scan it with Trivy against the
+# image deployed now (pinned in TitanRO/sysops argo/rochargen). The PR check fails on a build error or on a NEW fixable
+# HIGH/CRITICAL vulnerability. Same-repo PRs (incl. Renovate) run automatically; fork PRs need /ok-to-test.
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: rochargen-pr-
+  annotations:
+    pipelinesascode.tekton.dev/on-event: "[pull_request]"
+    pipelinesascode.tekton.dev/on-target-branch: "[master]"
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+    # A new push to the PR cancels the check still running for its previous commit.
+    pipelinesascode.tekton.dev/cancel-in-progress: "true"
+spec:
+  pipelineRef:
+    resolver: cluster
+    params:
+      - {name: kind, value: pipeline}
+      - {name: name, value: build-check}
+      - {name: namespace, value: tekton-pipelines}
+  params:
+    - {name: git-url, value: "{{ repo_url }}"}
+    - {name: git-revision, value: "{{ revision }}"}
+    - {name: context, value: .}
+    - {name: dockerfile, value: Dockerfile}
+    - {name: image-name, value: rochargen}
+    - {name: sysops-path, value: argo/rochargen}
+  taskRunTemplate:
+    serviceAccountName: ci-builder
+    podTemplate:
+      securityContext:
+        fsGroup: 65532
+  timeouts:
+    pipeline: 60m
+  workspaces:
+    - name: github-app
+      secret:
+        secretName: ci-github-app
+    - name: docr-pull
+      secret:
+        secretName: ci-docr-push
+        items:
+          - {key: docker_auth_config, path: config.json}
