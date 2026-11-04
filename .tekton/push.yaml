@@ -32,13 +32,6 @@ spec:
   timeouts:
     pipeline: 60m
   workspaces:
-    - name: work
-      volumeClaimTemplate:
-        spec:
-          accessModes: [ReadWriteOnce]
-          resources:
-            requests:
-              storage: 1Gi
     - name: docr-push
       secret:
         secretName: ci-docr-push
