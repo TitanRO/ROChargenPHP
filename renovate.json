@@ -1,0 +1,75 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "TitanRO dependency updates. Merging a PR deploys via Tekton Pipelines-as-Code; review accordingly.",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "America/Los_Angeles",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "minimumReleaseAge": "14 days",
+  "internalChecksFilter": "strict",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "labels": [
+    "renovate"
+  ],
+  "dependencyDashboard": true,
+  "vulnerabilityAlerts": {
+    "labels": [
+      "renovate",
+      "security"
+    ],
+    "minimumReleaseAge": null,
+    "schedule": [
+      "at any time"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Major upgrades wait for approval on the Dependency Dashboard issue.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Our own images are built and pinned by titanro-ci[bot], not Renovate.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "registry.digitalocean.com/**"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "package.json engines ranges are not dependencies to bump.",
+      "matchDepTypes": [
+        "engines"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Group non-major npm updates into one PR.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "npm non-major"
+    }
+  ],
+  "travis": {
+    "enabled": false
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on the first day of the month"
+    ]
+  }
+}
