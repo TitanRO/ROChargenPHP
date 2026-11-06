@@ -21,6 +21,13 @@ final class DB
 
 	static public $path = "db/";
 
+	/** Doram jobs (Summoner, Baby Summoner): sprites under 도람족 instead of 인간족. */
+	static private $doram = array(4218 => "summoner", 4220 => "summoner");
+
+	static public function is_doram($id) {
+		return isset(self::$doram[$id]);
+	}
+
 
 	// Return shadow factor
 	static public function get_shadow_factor($id) {
@@ -97,6 +104,10 @@ final class DB
 			self::$body    = require_once( self::$path . 'body.php');
 		}
 
+		if( self::is_doram($id) ) {
+			return "data/sprite/도람족/몸통/{$sex}/". self::$doram[$id] ."_{$sex}";
+		}
+
 		return "data/sprite/인간족/몸통/{$sex}/". self::$body[ isset(self::$body[$id]) ? $id : 0 ] ."_{$sex}";
 	}
 
@@ -104,6 +115,11 @@ final class DB
 	static public function get_body_pal_path($id,$sex,$pal)
 	{
 		$sex = self::$ascii_sex[$sex];
+
+		// The Summoner's own body has no dye palettes in the client data, only its costumes do.
+		if( self::is_doram($id) ) {
+			return false;
+		}
 
 		if( empty(self::$pals) ) {
 			self::$pals    = require_once( self::$path . 'pals.php');
@@ -122,9 +138,13 @@ final class DB
 	}
 
 	// Return head path
-	static public function get_head_path($id,$sex)  
+	static public function get_head_path($id,$sex,$class=0)
 	{
 		$_sex = self::$ascii_sex[$sex];
+
+		if( self::is_doram($class) ) {
+			return "data/sprite/도람족/머리통/{$_sex}/{$id}_{$_sex}";
+		}
 
 		//Is head order only use on character creation ?
 		/*
@@ -138,10 +158,15 @@ final class DB
 	}
 
 	// Return head pal path
-	static public function get_head_pal_path($id,$sex,$pal)
+	static public function get_head_pal_path($id,$sex,$pal,$class=0)
 	{
 		$sex = self::$ascii_sex[$sex];
-		return $pal ? "data/palette/머리/머리{$id}_{$sex}_{$pal}.pal" : false;
+		if( !$pal ) {
+			return false;
+		}
+		return self::is_doram($class)
+			? "data/palette/도람족/머리/머리{$id}_{$sex}_{$pal}.pal"
+			: "data/palette/머리/머리{$id}_{$sex}_{$pal}.pal";
 	}
 
 	// Return hat path

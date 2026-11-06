@@ -1,7 +1,8 @@
 <?php
 
 /**
-* @fileoverview Grf - Load and Parse .grf file (only 0x200 version without DES encryption).
+* @fileoverview Grf - Load and Parse .grf file: versions 0x200 and 0x300 (the 2025 kRO client's, with 64-bit
+* offsets), without DES encryption.
 * @author Vincent Thibault (alias KeyWorld - Twitter: @robrowser)
 * @version 1.0.0
 */
@@ -13,6 +14,9 @@ class Grf
 
 	private $fileTable, $header;
 	public $loaded = false;
+	public $filename = '';
+	/** Bytes of file info after each name in the file table: 17 in 0x200, 21 in 0x300 (64-bit offset). */
+	private $entrySize = 17;
 	protected $fp;
 
 	const HEADER_SIZE = 46;
@@ -63,14 +67,20 @@ class Grf
 		if( empty($this->fp) )
 			throw new Exception("GRF::load() - No file specify.");
 
-		// Parse header.
-		$this->header = unpack("a15signature/a15key/Ltable_offset/Lseeds/Lfilecount/Lversion", fread($this->fp, self::HEADER_SIZE) );
+		// Parse header: 0x300 has a 64-bit table offset (and no seed) where 0x200 has two 32-bit fields.
+		$raw          = fread($this->fp, self::HEADER_SIZE);
+		$this->header = unpack("a15signature/a15key/Ltable_offset/Lseeds/Lfilecount/Lversion", $raw);
 
-		if ( $this->header['signature'] !== 'Master of Magic' || $this->header['version'] !== 0x200 )
-			throw new Exception("GRF::load() - Sorry, can just open 0x200 version.");
+		if ( $this->header['version'] === 0x300 ) {
+			$this->header['table_offset'] = unpack("P", substr($raw, 30, 8))[1];
+			$this->entrySize = 21;
+		}
+		else if ( $this->header['signature'] !== 'Master of Magic' || $this->header['version'] !== 0x200 ) {
+			throw new Exception("GRF::load() - Sorry, can only open 0x200 and 0x300 versions.");
+		}
 
-		// Load table list
-		fseek( $this->fp, $this->header['table_offset'], SEEK_CUR);
+		// Load table list (0x300: 4 bytes before its sizes)
+		fseek( $this->fp, $this->header['table_offset'] + ($this->header['version'] === 0x300 ? 4 : 0), SEEK_CUR);
 		$fileTableInfo   = unpack("Lpack_size/Lreal_size", fread($this->fp, 0x08));
 		$this->fileTable = @gzuncompress( fread( $this->fp, $fileTableInfo['pack_size'] ), $fileTableInfo['real_size'] );
 
@@ -100,7 +110,9 @@ class Grf
 
 		// Extract file info from fileList
 		$position += strlen($filename) + 1;
-		$fileInfo  = unpack('Lpack_size/Llength_aligned/Lreal_size/Cflags/Lposition', substr($this->fileTable, $position, 17) );
+		$fileInfo  = $this->entrySize === 21
+			? unpack('Lpack_size/Llength_aligned/Lreal_size/Cflags/Pposition', substr($this->fileTable, $position, 21) )
+			: unpack('Lpack_size/Llength_aligned/Lreal_size/Cflags/Lposition', substr($this->fileTable, $position, 17) );
 
 		// Just open file.
 		if( $fileInfo['flags'] !== 1 )
