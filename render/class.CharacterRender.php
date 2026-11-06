@@ -126,8 +126,8 @@ class CharacterRender extends RORender
 
 		// Draw head
 		$this->renderImage( $img, array(
-			"path" => DB::get_head_path( $view['hair'], $view['sex'] ),
-			"pal"  => DB::get_head_pal_path( $view['hair'], $view['sex'], $view['hair_color'] ),
+			"path" => DB::get_head_path( $view['hair'], $view['sex'], $view['class'] ),
+			"pal"  => DB::get_head_pal_path( $view['hair'], $view['sex'], $view['hair_color'], $view['class'] ),
 			"pos"  => $pos,
 			"head" => true
 		));
@@ -215,7 +215,7 @@ class CharacterRender extends RORender
 				case 4054: $id = 4080; return;   // Rune Knight
 				case 4060: $id = 4081; return;   // Rune Knight T
 				case 4066: $id = 4082; return;   // Royal Guard
-				case 4073; $id = 4083; return;   // Royal Guard T
+				case 4073: $id = 4083; return;   // Royal Guard T
 				case 4096: $id = 4109; return;   // Baby Rune
 				case 4102: $id = 4110; return;   // Baby Guard
 			}

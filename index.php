@@ -41,7 +41,7 @@ Cache::$path          =     __ROOT__ . "cache/"   ;   // Cache directory
 Cache::$time          =     15 * 60               ;   // cache for 15 mins (set to 0 if you want to disable cache).
 //- Client
 Client::$path         =     __ROOT__ . "client/"  ;   // Define where your client path is (where you put your grfs, data, etc.)
-Client::$data_ini     =     "DATA.INI"            ;   // The name of your DATA.INI (to locate your grfs, if not set: grfs will not be loaded)
+Client::$data_ini     =     getenv("DATA_INI") ?: "DATA.INI"; // DATA.INI: absolute (e.g. grfhost's, mounted) or in the client path; its GRFs are relative to it
 Client::$AutoExtract  =     true                  ;   // If true, client will save extracted files from GRF into the data folder.
 //- DB
 DB::$path             =     __ROOT__ . "db/"      ;   // The db folder (where is located the lua likes files)

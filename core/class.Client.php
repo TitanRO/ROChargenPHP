@@ -33,27 +33,34 @@ final class Client
 	{
 		Debug::write('Client init...', 'title');
 
-		// Load GRFs from DATA.INI
-		if ( !empty(self::$data_ini) && file_exists(self::$path . self::$data_ini) && is_readable(self::$path . self::$data_ini) ) {
-			Debug::write('Loading "'. self::$data_ini .'" file...', 'info');
+		// Load GRFs from DATA.INI: an absolute path, or relative to the client path. GRFs it lists are relative to
+		// its folder unless absolute.
+		$ini = (strpos(self::$data_ini, '/') === 0) ? self::$data_ini : self::$path . self::$data_ini;
+		if ( !empty(self::$data_ini) && file_exists($ini) && is_readable($ini) ) {
+			Debug::write('Loading "'. $ini .'" file...', 'info');
 
 			// Setup GRF context
-			$data_ini = parse_ini_file( self::$path . self::$data_ini, true );
+			$data_ini = parse_ini_file( $ini, true );
 			$grfs     = array();
 
 			foreach( $data_ini['Data'] as $index => $grf_filename ) {
-				self::$grfs[$index] = new Grf($grf_filename);
-				self::$grfs[$index]->filename = $grf_filename;
-				$grfs[] = $grf_filename;
+				$grf_path = (strpos($grf_filename, '/') === 0) ? $grf_filename : dirname($ini) . '/' . $grf_filename;
+				try {
+					self::$grfs[$index] = new Grf($grf_path);
+					self::$grfs[$index]->filename = $grf_path;
+					$grfs[] = $grf_path;
+				}
+				catch (Exception $e) {
+					Debug::write($e->getMessage() . ' Skipping it.', 'error');
+				}
 			}
 
-			Debug::write('GRFs found in "'. self::$data_ini .'": '. implode(', ', $grfs), 'success' );
+			Debug::write('GRFs found in "'. $ini .'": '. implode(', ', $grfs), 'success' );
 			return;
 		}
 
-		Debug::write('File "'. self::$data_ini .'" isn\'t load : not set, not found, or not readable in "'. self::$path .'".', 'error');
+		Debug::write('File "'. $ini .'" isn\'t load : not set, not found, or not readable.', 'error');
 	}
-
 
 
 	/**
