@@ -43,6 +43,7 @@ Cache::$time          =     15 * 60               ;   // cache for 15 mins (set 
 Client::$path         =     __ROOT__ . "client/"  ;   // Define where your client path is (where you put your grfs, data, etc.)
 Client::$data_ini     =     getenv("DATA_INI") ?: "DATA.INI"; // DATA.INI: absolute (e.g. grfhost's, mounted) or in the client path; its GRFs are relative to it
 Client::$AutoExtract  =     true                  ;   // If true, client will save extracted files from GRF into the data folder.
+Client::$data_dirs    =     array_filter(explode(':', getenv("DATA_DIRS") ?: "")); // more folders with a data/ tree (e.g. grfhost's loose files), searched before the GRFs
 //- DB
 DB::$path             =     __ROOT__ . "db/"      ;   // The db folder (where is located the lua likes files)
 //- Sql
