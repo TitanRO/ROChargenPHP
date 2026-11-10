@@ -24,6 +24,12 @@ final class Client
 	static private $grfs       = array();
 	static public $AutoExtract = false;
 
+	/**
+	 * More folders holding a client's loose data files (each with a data/ tree, e.g. grfhost's), searched after the
+	 * own data folder and before the GRFs: a client release ships some sprites as loose files only.
+	 */
+	static public $data_dirs = array();
+
 
 
 	/**
@@ -80,6 +86,20 @@ final class Client
 			return $local_path;
 		}
 
+		// Loose files of the client release, found whatever the case of their names (as the client, on Windows):
+		// by the name as asked and its UTF-8 form (grfhost's client-sync writes UTF-8 names).
+		$relative = str_replace('\\', '/', $path );
+		$utf8     = @iconv('CP949', 'UTF-8', $relative);
+		foreach( self::$data_dirs as $dir ) {
+			foreach( array_unique(array_filter(array($relative, $utf8))) as $name ) {
+				$candidate = self::findInsensitive( rtrim($dir, '/'), $name );
+				if ( $candidate !== false && is_readable($candidate) ) {
+					Debug::write('Find at "'. $candidate .'"', 'success');
+					return $candidate;
+				}
+			}
+		}
+
 		// Search in GRFS
 		Debug::write('File not found in data folder.');
 		if( count(self::$grfs) ) {
@@ -130,6 +150,40 @@ final class Client
 
 		Debug::write('File not found...', 'error');
 		return false;
+	}
+
+
+	/**
+	 * The file at $base/$relative, each path segment matched whatever its case; false if there's none.
+	 * Directory listings are kept for the request.
+	 */
+	static private $listings = array();
+	static private function findInsensitive($base, $relative)
+	{
+		$current = $base;
+		foreach( explode('/', $relative) as $segment ) {
+			if( $segment === '' )
+				continue;
+			$exact = $current . '/' . $segment;
+			if( file_exists($exact) ) {
+				$current = $exact;
+				continue;
+			}
+			if( !isset(self::$listings[$current]) ) {
+				$entries = is_dir($current) ? @scandir($current) : false;
+				$map = array();
+				if( $entries !== false ) {
+					foreach( $entries as $entry )
+						$map[strtolower($entry)] = $entry;
+				}
+				self::$listings[$current] = $map;
+			}
+			$lower = strtolower($segment);
+			if( !isset(self::$listings[$current][$lower]) )
+				return false;
+			$current .= '/' . self::$listings[$current][$lower];
+		}
+		return is_dir($current) ? false : $current;
 	}
 
 

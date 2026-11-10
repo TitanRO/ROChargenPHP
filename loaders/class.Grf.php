@@ -13,6 +13,8 @@ class Grf
 {
 
 	private $fileTable, $header;
+
+	private $fileTableLower = null; // fileTable in lower case (getFile)
 	public $loaded = false;
 	public $filename = '';
 	/** Bytes of file info after each name in the file table: 17 in 0x200, 21 in 0x300 (64-bit offset). */
@@ -101,8 +103,13 @@ class Grf
 		if( !$this->loaded )
 			return false;
 
-		// Not case sensitive.
-		$position = strpos( $this->fileTable, $filename . "\0" );
+		// GRF names are case-insensitive (the client opens them as Windows paths): look the name up in lower case in
+		// a lower-cased copy of the table, then read the entry from the table itself at the same place (strtolower
+		// changes only A-Z, so lengths and positions stay; names' CP949 bytes are left alone).
+		if( $this->fileTableLower === null )
+			$this->fileTableLower = strtolower($this->fileTable);
+		$filename = strtolower($filename);
+		$position = strpos( $this->fileTableLower, $filename . "\0" );
 
 		// File not found
 		if( $position === false )
