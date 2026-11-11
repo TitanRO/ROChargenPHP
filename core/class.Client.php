@@ -137,9 +137,14 @@ final class Client
 						}
 					}
 
-					// Saving file
-					file_put_contents( $local_path, $content);
-					return $local_path;
+					// Saving file: written aside and renamed, so a request running at the same time never reads a
+					// half-written file (a short palette renders the hair and body black).
+					$part = $local_path . '.' . getmypid() . '.' . uniqid() . '.part';
+					if( file_put_contents( $part, $content) === strlen($content) && rename( $part, $local_path ) ) {
+						return $local_path;
+					}
+					@unlink($part);
+					return "data://application/octet-stream;base64," .  base64_encode($content);
 				}
 
 				return "data://application/octet-stream;base64," .  base64_encode($content);
