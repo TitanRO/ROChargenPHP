@@ -96,6 +96,14 @@ try {
 catch(Exception $e)
 {
 	Debug::write( $e->getMessage(), 'error');
+	// Not a picture: say so, so clients retry and nothing keeps the response.
+	if( !headers_sent() ) {
+		http_response_code(503);
+		header('Cache-Control: no-store');
+		header('Retry-After: 1');
+		header('Content-type: text/plain');
+	}
+	error_log('rochargen: '. $e->getMessage());
 }
 
 

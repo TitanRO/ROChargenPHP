@@ -215,8 +215,17 @@ abstract class RORender
 		// If have palette, load it
 		if ( !empty($param['pal']) )
 		{
-			if ( $file_pal = Client::getFile($param['pal']) )
-				$spr->palette = file_get_contents($file_pal);
+			if ( $file_pal = Client::getFile($param['pal']) ) {
+				$palette = file_get_contents($file_pal);
+				// A palette is 1024 bytes; a shorter one (a file still being written, or cut short) would draw
+				// every pixel black. Fail the request instead (the caller retries) and drop a bad extracted copy.
+				if ( $palette === false || strlen($palette) < 1024 ) {
+					if ( strpos($file_pal, 'data://') !== 0 && strpos(realpath($file_pal) ?: '', realpath(Client::$path) ?: '/nonexistent') === 0 )
+						@unlink($file_pal);
+					throw new Exception('Palette "'. $param['pal'] .'" is '. ($palette === false ? 'unreadable' : strlen($palette) .' bytes'));
+				}
+				$spr->palette = $palette;
+			}
 		}
 
 		$pos        = $animation->pos[0];
